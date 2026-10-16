@@ -1,0 +1,29 @@
+# Input data: downloaded from Zenodo (see README)
+data/*
+!data/.gitkeep
+
+# Generated outputs
+results/*
+!results/.gitkeep
+source_data/*
+!source_data/.gitkeep
+figure_panels/*
+!figure_panels/.gitkeep
+plots/*
+!plots/.gitkeep
+
+# Temporary files written by MetaboAnalystR (mummichog) if a run is interrupted
+mummichog_*
+*.qs
+raw_dataview.csv
+
+# R / Python / OS
+.Rhistory
+.RData
+.RDataTmp
+.Rproj.user/
+.ipynb_checkpoints/
+__pycache__/
+.DS_Store
+Thumbs.db
+~$*
