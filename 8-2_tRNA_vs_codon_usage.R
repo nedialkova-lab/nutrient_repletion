@@ -4,7 +4,7 @@
 # and aminoacylation (fdrtool q-values), and GSEA of genes ranked by codon frequency.
 #
 # Manuscript: Fig. 4D-E; Extended Data Fig. 5D-F
-# Requires  : outputs of 7-3 (RxT) and 8-1 (tRNA tables)
+# Requires  : outputs of 7-3 (RxT), 7-5 (A-site occupancies, provided on Zenodo) and 8-1 (tRNA tables)
 # Inputs    : data/sacCer3.no_dubious_ORFs_coding.fa
 #             data/pairing_rules_Johansson2008.txt
 #             results/RxT.tsv

@@ -9,7 +9,6 @@
 #             data/20240507_lipms_upshifts_5199/240507_lipms.xlsx
 #             results/{TrPProt,LiPPep}.txt
 #             results/diffProtAbund_{G,N,P}.tsv
-#             data/interaction_promis_S11.txt (exploratory comparison at the end of the script)
 # Outputs   : results/resLiP.tsv
 #             results/diffStructurome_{G,N,P}.tsv
 #             figure_panels/venn_resLiP_proteins.pdf

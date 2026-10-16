@@ -3,7 +3,7 @@
 # A-site codon occupancies per sample (short 20-23 nt and long 27-32 nt footprints)
 # from the RiboNet pre-processing outputs of each repletion dataset.
 #
-# Manuscript: Extended Data Fig. 3E; inputs of 7-6 (Fig. 2D-E)
+# Manuscript: Extended Data Fig. 3E; inputs of 7-6 (Fig. 2D-E) and 8-2 (Fig. 4D-E)
 # Requires  : RiboNet pre-processing ('ribonet preprocessing') of each dataset
 # Inputs    : <ribonet_preprocessing>/x_inputs.parquet, y_outputs.parquet, sample_file.txt
 # Outputs   : data/20241210_RNA_RPF/glucose_asite_occupancy.tsv

@@ -18,7 +18,8 @@
 #             figure_panels/cormatrix_proteins.pdf
 #             figure_panels/GOtrans_top15_cor{LiP,Metab}.pdf
 #             figure_panels/{MES1vsAMP,SES1vsAMP,TEF1-2vsAsp,STM1vsAsp}_{woodplot,correlation}.pdf
-#             figure_panels/CDC60_Gua_woodplot.pdf, CDC60vsGuan_{correlation,N_lineplot}.pdf
+#             figure_panels/CDC60_Gua_woodplot.pdf
+#             figure_panels/CDC60vsGuan_{correlation,N_lineplot}.pdf
 #             figure_panels/{MES1vsAMP,SES1vsAMP,TEF1-2vsAsp}_G_lineplot.pdf
 #             plots/cormatrix_heatmap{,_translation}.html (interactive)
 #             source_data/LiPMS_vs_Metab_filteredsignificant.tsv

@@ -9,8 +9,8 @@ Code to reproduce the analyses and figures of:
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/hexavier/repletions.git
-cd repletions
+git clone https://github.com/nedialkova-lab/nutrient_repletions.git
+cd nutrient_repletions
 
 # 2. Download the source data from Zenodo into the repository root
 
@@ -29,7 +29,7 @@ written to `results/` (analysis tables), `source_data/` (figure source data), `f
 ## Repository structure
 
 ```
-repletions/
+nutrient_repletions/
 ├── <N-M>_<analysis>.{R/py/ipynb}   # analysis scripts, run in numerical order
 ├── data/          # input data, from Zenodo (not tracked)
 ├── results/       # analysis results (results/seqlets/ comes from Zenodo)
