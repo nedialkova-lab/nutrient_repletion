@@ -99,11 +99,6 @@ rownames(AsiteN) = AsiteN$Group.1; AsiteN= AsiteN[,-c(1)]
 AsiteN = AsiteN[c("N0_short","N1_short","N2_short","N4_short","N7_short","N10_short",
                   "N0_long","N1_long","N2_long","N4_long","N7_long","N10_long" ),]
 
-#AsiteG = log2(read.csv("data/20241210_RNA_RPF/glucose_pause_Asite_all.tsv", sep="\t", row.names = 1))
-#AsiteG = AsiteG[c(grep("short",rownames(AsiteG))[c(1,3,4,5,6,2)],grep("long",rownames(AsiteG))[c(1,3,4,5,6,2)]),]
-#AsiteN = log2(read.csv("data/20241210_RNA_RPF/nitrogen_pause_Asite_all.tsv", sep="\t", row.names = 1))
-#AsiteN = AsiteN[c(grep("short",rownames(AsiteN))[c(1,3,4,5,6,2)],grep("long",rownames(AsiteN))[c(1,3,4,5,6,2)]),]
-
 # tRNAs
 percdfG = read.csv("results/tRNA_glucose_anticodon_abundance.tsv", sep = "\t")
 chargedpercdfG = read.csv("results/tRNA_glucose_anticodon_CCAabundance.tsv", sep = "\t")
@@ -156,11 +151,6 @@ for (cod in codorder){
       tempdf[row,"codval"] = colSums(codus)[tempdf[row,"codon"]]
     }
   }
-  # Center per cond
-  #tempdf$anti_abund = apply(tempdf,1,function(x) as.numeric(x["anti_abund"]) - mean(tempdf[grepl(substr(x["cond"],1,1),tempdf$cond)&grepl(x["anticodon"],tempdf$anticodon),"anti_abund"], na.rm=T))
-  #tempdf$anti_corabund = apply(tempdf,1,function(x) as.numeric(x["anti_corabund"]) - mean(tempdf[grepl(substr(x["cond"],1,1),tempdf$cond)&grepl(x["anticodon"],tempdf$anticodon),"anti_corabund"], na.rm=T))
-  #tempdf$anti_cca = apply(tempdf,1,function(x) as.numeric(x["anti_cca"]) - mean(tempdf[grepl(substr(x["cond"],1,1),tempdf$cond)&grepl(x["anticodon"],tempdf$anticodon),"anti_cca"], na.rm=T))
-  #tempdf$codval = apply(tempdf,1,function(x) as.numeric(x["codval"]) - mean(tempdf[grepl(substr(x["cond"],1,1),tempdf$cond)&grepl(x["codon"],tempdf$codon)&grepl(x["pair"],tempdf$pair),"codval"], na.rm=T))
   # Record
   longdf = rbind(longdf,tempdf)
 }
