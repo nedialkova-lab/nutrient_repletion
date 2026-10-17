@@ -89,7 +89,7 @@ codfreq_long <- melt(codfreq,
                      variable.name = "codon",
                      value.name    = "frequency")
 testdf = compare_means(value ~ group, codfreq_long, group.by = "variable",
-                    method   = "wilcox.test")
+                    method   = "wilcox.test", p.adjust.method = "fdr")
 write.table(testdf, "results/codus_GATC_stats.tsv", sep = "\t")
 
 ggplot(codfreq_long, aes(x = variable, 
