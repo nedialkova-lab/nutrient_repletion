@@ -49,8 +49,8 @@ and the scripts it depends on.
 |---|---|---|---|
 | `1-1_explore_proteomics.R` | Total proteome of depleted cultures vs SD | ED Fig. 1 | |
 | `2-1_targeted_metabolomics_4973.R` | Targeted amino acid metabolomics | ED Fig. 5G-H | |
-| `2-2_unfiltered_metabolomics_4973.R` | Untargeted metabolomics: normalisation, batch correction, differential analysis | Fig. 1C-D; ED Fig. 2C | |
-| `2-3_clustering_metabolomics_4973.R` | Clustering and mummichog pathway enrichment of metabolites | Fig. 1B; ED Fig. 2A-B | 2-2 |
+| `2-2_unfiltered_metabolomics_4973.R` | Untargeted metabolomics: normalisation, batch correction, differential analysis | Fig. 1C-D; ED Fig. 2A | |
+| `2-3_clustering_metabolomics_4973.R` | Clustering and mummichog pathway enrichment of metabolites | Fig. 1B; ED Fig. 2B-C | 2-2 |
 | `3-1_explore_ctrl_lipms.R` | Exploratory: total proteome vs LiP-MS TrP controls | – | |
 | `3-2_explore_LiPMS_5199.R` | Exploratory: LiP-MS quality control (PCA, replicates, batch) | – | |
 | `3-3_LiPMS_batchcorrection.R` | LiP-MS / TrP extraction and batch correction | – | |
