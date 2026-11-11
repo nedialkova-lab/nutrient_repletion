@@ -339,10 +339,14 @@ saveWidget(p, "plots/cormatrix_heatmap_translation.html", selfcontained = TRUE)
 # Check AA synthetases
 cyto_tRNAsyn = c("SES1","MES1","DPS1","GLN4","GRS1","HTS1","GUS1","CDC60","THS1","ILS1","KRS1",
                  "YHR020W","WRS1","ALA1","YDR341C","DED81","YNL247W","FRS1","FRS2","TYS1","VAS1")
+# VAS1 peptides are assigned to isoform accession P07806-2, which has no gene_name;
+# label them by accession so VAS1 is not missed
+aars_lab = ifelse(grepl("^P07806", annotprot$Protein), "VAS1", annotprot$gene_name)
+is_aars = sapply(aars_lab, function(x) any(strsplit(x,";")[[1]] %in% cyto_tRNAsyn))
 sprintf("All gene ids (20 aaRS): %i. Detected: %s. Significant: %s. Correlating: %s", length(cyto_tRNAsyn),
-        paste0(unique(annotprot[sapply(annotprot$gene_name, function(x) any(strsplit(x,";")[[1]] %in% cyto_tRNAsyn)),"gene_name"]),collapse=","),
-        paste0(unique(annotprot[(sapply(annotprot$gene_name, function(x) any(strsplit(x,";")[[1]] %in% cyto_tRNAsyn)))&(rownames(annotprot) %in% siglip),"gene_name"]),collapse=","),
-        paste0(unique(annotprot[(sapply(annotprot$gene_name, function(x) any(strsplit(x,";")[[1]] %in% cyto_tRNAsyn)))&(rownames(annotprot) %in% corsigfull[corsigfull$lfdr<0.05,"X1"]),"gene_name"]),collapse=","))
+        paste0(unique(aars_lab[is_aars]),collapse=","),
+        paste0(unique(aars_lab[is_aars & (rownames(annotprot) %in% siglip)]),collapse=","),
+        paste0(unique(aars_lab[is_aars & (rownames(annotprot) %in% corsigfull[corsigfull$lfdr<0.05,"X1"])]),collapse=","))
 
 # Find protein regulated by metab
 metab = "348.07040__2.226" #AMP
