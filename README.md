@@ -75,9 +75,8 @@ and the scripts it depends on.
 | `9-1_ribonet_candidates.R` | Exploratory: RxT/RPF/RNA time courses of candidate genes | – | 6-1, 7-1, 7-3 |
 | `9-2_ribonet_seqlets.R` | GO and codon-usage enrichment of GAUY genes | Sup. Table | RiboNet |
 | `10-1_attune_CPR8_ONdeprivation.R` | Flow cytometry, CPR8 5'UTR reporters | Fig. 6G; ED Fig. 7H | |
-| `10-2_attune_TYW1_Ctrls_ONdeprivation.R` | Flow cytometry, TYW1 reporters and Citrine controls (rep. 1-2) | ED Fig. 7G, J | |
-| `10-3_attune_TYW1_Ctrls_ONdeprivation.R` | Flow cytometry, TYW1 reporters (rep. 3) | ED Fig. 7J | |
-| `10-4_qPCR_CPR8_ONdeprivation.R` | RT-qPCR of reporters | ED Fig. 7K | |
+| `10-2_attune_TYW1_Ctrls_ONdeprivation.R` | Flow cytometry, TYW1 reporters (rep. 1-3), Citrine controls and HXT6 reporters | ED Fig. 7G, J | |
+| `10-3_qPCR_CPR8_ONdeprivation.R` | RT-qPCR of reporters | ED Fig. 7K | |
 
 ## Software requirements
 

@@ -3,14 +3,17 @@
 # Flow cytometry (Attune NxT) of the CPR8 5'UTR reporter strains: gating (debris,
 # singlets), background subtraction and Citrine/mCherry ratios relative to the
 # glucose-depleted condition. QC plots and the gated table are written into the
-# data folder itself.
+# data folder itself. Statistics: per-culture medians with within-culture
+# cell-bootstrap 95% CIs, each biological replicate shown separately.
 #
 # Manuscript: Fig. 6G; Extended Data Fig. 7H
 # Inputs    : data/Attune/20251009_CPR8_ONdeprivation/*.fcs
 # Outputs   : data/Attune/20251009_CPR8_ONdeprivation/{*.png, CPR8depr_bg_corrected.tsv}
 #             figure_panels/CPR8_log2ratio.pdf
 #             figure_panels/CPR8_deltalog2ratio.pdf
+#             figure_panels/CPR8_bootstrap_{responses,contrasts}.pdf
 #             results/flow_CPR8_ratio_percentiles.tsv
+#             results/flow_CPR8_bootstrap_{sample_medians,responses,contrasts,replicate_summary}.tsv
 # Run from the repository root (all paths are relative to it).
 # ==============================================================================
 
@@ -162,6 +165,199 @@ ggplot(percdf[(percdf$fluor=="ratio"),], aes(x=time, y=delta_log2_ratio, fill=st
   coord_cartesian(ylim = c(-0.8, 2.5)) +
   theme_bw()
 ggsave("figure_panels/CPR8_deltalog2ratio.pdf", width = 6, height = 6)
-my_comparisons <- list(c("duplicated", "WT"),  c("duplicated","scrambled"), c("WT", "scrambled"), c("WT", "scrambled1"), c("duplicated","scrambled1"),
-                       c("WT", "scrambled2"), c("duplicated","scrambled2"), c("scrambled1","scrambled2"))
-compare_means(delta_log2_ratio ~ strain_def, percdf[(percdf$fluor=="ratio")&(percdf$time!="G0"),], method = "wilcox.test", alternative = "greater", comparisons = my_comparisons, group.by = c("time","rep"), paired = T)
+
+# ==============================================================================
+# Bootstrap reanalysis (replaces the former percentile-level Wilcoxon tests)
+# Per-culture medians of the single-cell log2(ratio), ratio = Citrine.cor/mCherry.cor
+# (background-corrected values, as saved in CPR8depr_bg_corrected.tsv), with
+# within-culture cell-bootstrap 95% CIs. No quantile binning, no cell/percentile-
+# level p-values. CIs are cell-sampling uncertainty within cultures, NOT between
+# biological replicates.
+# ==============================================================================
+set.seed(20261115)
+B <- 1000L  # bootstrap draws per sample
+
+bs_gene <- "CPR8"
+bs_strains <- c(YDN270 = "duplicated", YDN271 = "scrambled", YDN272 = "WT")
+bs_variants <- c("scrambled", "WT", "duplicated")
+bs_conditions <- c("Glc", "G0", "G1", "G2")  # same x axis as Fig. 6G
+
+# Parse sample IDs (e.g., YDN270_G1_rep2); use corrected single-cell ratio.
+cells <- gated_data %>%
+  dplyr::filter(grepl("^YDN(270|271|272)_(Glc|G0|G1|G2)_rep[0-9]+$", .id),
+                is.finite(ratio), ratio > 0) %>%
+  dplyr::transmute(
+    sample_id = .id,
+    strain = sub("_.*", "", .id),
+    condition = sub("^[^_]+_([^_]+)_.*$", "\\1", .id),
+    replicate = sub("^.*_(rep[0-9]+)$", "\\1", .id),
+    variant = unname(bs_strains[strain]),
+    log_ratio = log2(ratio)
+  )
+if (nrow(cells) == 0) stop("No CPR8 cell data found. Check sample IDs and gated_data$ratio.")
+
+# Every replicate needs all conditions for each of the 3 variants.
+coverage <- cells %>% dplyr::distinct(sample_id, replicate, variant, condition)
+needed <- expand.grid(replicate = sort(unique(cells$replicate)),
+                      variant = bs_variants,
+                      condition = bs_conditions,
+                      stringsAsFactors = FALSE)
+missing <- dplyr::anti_join(needed, coverage, by = c("replicate", "variant", "condition"))
+if (nrow(missing)) {
+  print(missing)
+  stop("Missing matched samples: do not calculate contrasts until these are resolved.")
+}
+
+# Resampling is performed WITHIN each independent cell sample, not across cultures.
+# The b-th draw of a given G0 sample is reused in all contrasts containing that baseline.
+# This preserves shared-baseline dependence in the bootstrap contrast distributions.
+bootstrap_median <- function(x, B) {
+  n <- length(x)
+  if (n < 2L) stop("Too few cells in a sample")
+  vapply(seq_len(B), function(b) median(x[sample.int(n, n, replace = TRUE)]), numeric(1))
+}
+
+samples <- cells %>%
+  dplyr::group_by(replicate, variant, condition) %>%
+  dplyr::summarise(n_cells = dplyr::n(),
+                   estimate = median(log_ratio),
+                   draws = list(bootstrap_median(log_ratio, B)),
+                   .groups = "drop")
+stopifnot(nrow(samples) == nrow(needed))
+
+# Give each sample an unambiguous key; list-column contains B bootstrap draws.
+keys <- paste(samples$replicate, samples$variant, samples$condition, sep = "|")
+point <- setNames(samples$estimate, keys)
+boot <- setNames(samples$draws, keys)
+key <- function(rep, variant, condition) paste(rep, variant, condition, sep = "|")
+ci <- function(draws) unname(quantile(draws, c(.025, .975), names = FALSE))
+
+# 1. Baseline (G0, depleted) normalized response for each variant within each replicate.
+# 2. Difference-in-differences of WT / duplicated relative to scrambled.
+# G0 is the embedded reference (0 by construction); its x slot is kept in the plots
+# to match the original figure, but its points are not drawn.
+response_rows <- list()
+contrast_rows <- list()
+for (rep in sort(unique(samples$replicate))) {
+  for (time in bs_conditions) {
+    response_est <- list()
+    response_boot <- list()
+    for (v in bs_variants) {
+      kt <- key(rep, v, time)
+      k0 <- key(rep, v, "G0")
+      response_est[[v]] <- unname(point[[kt]] - point[[k0]])
+      response_boot[[v]] <- boot[[kt]] - boot[[k0]]
+      bounds <- ci(response_boot[[v]])
+      response_rows[[length(response_rows) + 1L]] <- data.frame(
+        gene = bs_gene, replicate = rep, condition = time, variant = v,
+        response_log2 = response_est[[v]],
+        lower95 = bounds[1], upper95 = bounds[2],
+        n_cells_time = samples$n_cells[match(kt, keys)],
+        n_cells_G0 = samples$n_cells[match(k0, keys)]
+      )
+    }
+    for (v in c("WT", "duplicated")) {
+      difference <- response_est[[v]] - response_est[["scrambled"]]
+      # Same bootstrap draws for scrambled baseline are reused across both comparisons.
+      draws <- response_boot[[v]] - response_boot[["scrambled"]]
+      bounds <- ci(draws)
+      contrast_rows[[length(contrast_rows) + 1L]] <- data.frame(
+        gene = bs_gene, replicate = rep, condition = time,
+        contrast = paste(v, "vs scrambled"),
+        effect_log2 = difference,
+        lower95 = bounds[1], upper95 = bounds[2],
+        bootstrap_ci_excludes_zero = (bounds[1] > 0 || bounds[2] < 0)
+      )
+    }
+  }
+}
+
+responses <- dplyr::bind_rows(response_rows) %>%
+  dplyr::mutate(variant = factor(variant, levels = bs_variants),
+                condition = factor(condition, levels = bs_conditions))
+contrasts <- dplyr::bind_rows(contrast_rows) %>%
+  dplyr::mutate(contrast = factor(contrast, levels = c("WT vs scrambled", "duplicated vs scrambled")),
+                condition = factor(condition, levels = bs_conditions))
+
+# Descriptive summary across biological replicates: NO between-replicate p-value.
+effect_summary <- contrasts %>%
+  dplyr::filter(condition != "G0") %>%
+  dplyr::group_by(gene, condition, contrast) %>%
+  dplyr::summarise(n_biological_replicates = dplyr::n(),
+                   mean_effect_log2 = mean(effect_log2),
+                   min_effect_log2 = min(effect_log2),
+                   max_effect_log2 = max(effect_log2),
+                   positive_replicates = sum(effect_log2 > 0), .groups = "drop")
+
+write.table(samples %>% dplyr::select(-draws), sprintf("results/flow_%s_bootstrap_sample_medians.tsv", bs_gene), sep = "\t", quote = F, row.names = F)
+write.table(responses, sprintf("results/flow_%s_bootstrap_responses.tsv", bs_gene), sep = "\t", quote = F, row.names = F)
+write.table(contrasts, sprintf("results/flow_%s_bootstrap_contrasts.tsv", bs_gene), sep = "\t", quote = F, row.names = F)
+write.table(effect_summary, sprintf("results/flow_%s_bootstrap_replicate_summary.tsv", bs_gene), sep = "\t", quote = F, row.names = F)
+print(responses)
+print(contrasts)
+print(effect_summary)
+
+# Single-panel plots: same x axis (Glc, G0, G1, G2) and construct colors as the
+# original boxplots (scrambled = muted green, WT = ochre, duplicated = lavender).
+# Points are biological replicates (shape), whiskers are cell-bootstrap 95% CIs.
+variant_colors <- c(scrambled = "#78A99D", WT = "#DBB579", duplicated = "#B99AC8")
+bs_reps <- sort(unique(responses$replicate))
+replicate_shapes <- setNames(c(16, 17, 15, 18, 8)[seq_along(bs_reps)], bs_reps)
+rep_offset <- if (length(bs_reps) > 1) setNames(seq(-0.05, 0.05, length.out = length(bs_reps)), bs_reps) else setNames(0, bs_reps)
+# manual nested dodge: condition -> variant -> replicate
+add_x <- function(df, var_levels, var_halfwidth) {
+  var_offset <- setNames(seq(-var_halfwidth, var_halfwidth, length.out = length(var_levels)), var_levels)
+  df$x <- as.numeric(df$condition) + var_offset[as.character(df$variant)] + rep_offset[as.character(df$replicate)]
+  df
+}
+bs_theme <- theme_classic(base_size = 12) +
+  theme(panel.grid.major.y = element_line(colour = "grey92", linewidth = .3),
+        axis.text.x = element_text(size = 11),
+        axis.title.y = element_text(margin = margin(r = 10)),
+        legend.position = "bottom", legend.box = "vertical",
+        legend.margin = margin(0, 0, 0, 0), legend.spacing.y = grid::unit(2, "pt"),
+        plot.caption = element_text(size = 8.5, colour = "grey35", hjust = 0, margin = margin(t = 9)),
+        plot.margin = margin(10, 12, 7, 10))
+bs_caption <- sprintf("Points: individual biological replicates (n = %d).\nError bars: 95%% cell-bootstrap CIs within each replicate (B = %d).",
+                      length(bs_reps), B)
+
+# Plot 1: response of each construct vs depleted (G0), analogous to the original boxplots.
+p_response <- ggplot(add_x(dplyr::filter(responses, condition != "G0"), bs_variants, 0.28),
+                     aes(x = x, y = response_log2, colour = variant, shape = replicate)) +
+  geom_hline(yintercept = 0, linetype = "dashed", colour = "grey65", linewidth = .35) +
+  geom_errorbar(aes(ymin = lower95, ymax = upper95), width = .05, linewidth = .6) +
+  geom_point(size = 2.6) +
+  scale_x_continuous(breaks = seq_along(bs_conditions), labels = bs_conditions,
+                     expand = expansion(add = .45)) +
+  scale_colour_manual(values = variant_colors) +
+  scale_shape_manual(values = replicate_shapes) +
+  labs(x = NULL, colour = "Construct", shape = "Biological replicate",
+       y = expression(Delta~"median "*log[2]*"(Citrine/mCherry) vs depleted"),
+       title = bs_gene, caption = bs_caption) +
+  bs_theme
+print(p_response)
+ggsave(sprintf("figure_panels/%s_bootstrap_responses.pdf", bs_gene), p_response,
+       width = 5.5, height = 4.6, device = "pdf")
+
+# Plot 2: difference-in-differences relative to scrambled
+# (dashed zero line = scrambled).
+contrasts_plot <- contrasts %>%
+  dplyr::mutate(variant = factor(ifelse(as.character(contrast) == "WT vs scrambled", "WT", "duplicated"),
+                                 levels = c("WT", "duplicated")))
+p_effect <- ggplot(add_x(dplyr::filter(contrasts_plot, condition != "G0"), c("WT", "duplicated"), 0.17),
+                   aes(x = x, y = effect_log2, colour = variant, shape = replicate)) +
+  geom_hline(yintercept = 0, linetype = "dashed", colour = variant_colors[["scrambled"]], linewidth = .5) +
+  geom_errorbar(aes(ymin = lower95, ymax = upper95), width = .05, linewidth = .6) +
+  geom_point(size = 2.6) +
+  scale_x_continuous(breaks = seq_along(bs_conditions), labels = bs_conditions,
+                     expand = expansion(add = .45)) +
+  scale_y_continuous(expand = expansion(mult = c(.12, .12))) +
+  scale_colour_manual(values = variant_colors[c("WT", "duplicated")]) +
+  scale_shape_manual(values = replicate_shapes) +
+  labs(x = NULL, colour = "Construct (vs scrambled)", shape = "Biological replicate",
+       y = expression(Delta*Delta~"median "*log[2]*"(Citrine/mCherry)"),
+       title = bs_gene, caption = bs_caption) +
+  bs_theme
+print(p_effect)
+ggsave(sprintf("figure_panels/%s_bootstrap_contrasts.pdf", bs_gene), p_effect,
+       width = 5.5, height = 4.6, device = "pdf")

@@ -1,5 +1,5 @@
 # ==============================================================================
-# 10-4_qPCR_CPR8_ONdeprivation.R
+# 10-3_qPCR_CPR8_ONdeprivation.R
 # RT-qPCR of Citrine relative to mCherry (ddCt) for the CPR8 5'UTR reporter strains.
 #
 # Manuscript: Extended Data Fig. 7K
