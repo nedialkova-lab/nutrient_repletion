@@ -2,8 +2,9 @@
 
 Code to reproduce the analyses and figures of:
 
-> Hernandez-Alias X, Kaya S, Doychev K, Schroeder F, Hermann B, Madran B, Majidian S, Gagneur J, Nedialkova DD.
-> **Metabolic state rapidly reprograms translation through initiation and elongation control.**
+> Hernandez-Alias X, Kaya S, Doychev K, Schroeder F, Hermann B, Madran B, Majidian S, Gagneur J, Nedialkova DD (2026).
+> **Metabolic transitions reprogram translation through sequence-dependent regulation.**
+> *bioRxiv*. https://doi.org/10.64898/2026.11.15.766763
 
 ## Quick start
 
